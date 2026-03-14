@@ -102,3 +102,5 @@ src/
 | 2026-03-14 | Actualizada fórmula intereses prestaciones: Interés = Acumulado * Tasa_Activa_Mensual (58.30%/12) |
 | 2026-03-14 | Módulo Exportación Bancaria Intereses: botón cobalt blue, modal banco, validación 20 dígitos, TXT formato fijo Banesco/Mercantil |
 | 2026-03-14 | Master: Gestión de Pagos y Licencias - validar Binance/PagoMóvil/Zinli/BanescoPA, activar licencia 30 días con email bienvenida + PDF manual |
+| 2026-03-14 | Respaldo DB: función exportar JSON completo empresa desde panel Master |
+| 2026-03-14 | Cierre de Mes: botón 'Cerrar Mes' bloquea ediciones para integridad contable |

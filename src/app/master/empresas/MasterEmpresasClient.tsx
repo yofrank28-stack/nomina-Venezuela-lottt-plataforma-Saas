@@ -97,6 +97,39 @@ export default function MasterEmpresasClient({ empresas }: Props) {
     }
   }
 
+  async function handleBackup(empresaId: string, empresaNombre: string) {
+    if (!confirm(`¿Exportar respaldo completo de "${empresaNombre}"?`)) return;
+    
+    try {
+      const res = await fetch(`/api/backup?empresaId=${empresaId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      
+      if (!res.ok) {
+        alert("Error al generar respaldo");
+        return;
+      }
+      
+      const data = await res.json();
+      
+      // Create JSON file
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const fecha = new Date().toISOString().split("T")[0];
+      a.download = `backup_${empresaNombre.replace(/[^a-zA-Z0-9]/g, "_")}_${fecha}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert(`Respaldo de "${empresaNombre}" descargado exitosamente`);
+    } catch {
+      alert("Error al generar respaldo");
+    }
+  }
+
   const filtered = empresas.filter((e) =>
     !filtro || `${e.rif} ${e.razonSocial}`.toLowerCase().includes(filtro.toLowerCase())
   );
@@ -162,6 +195,13 @@ export default function MasterEmpresasClient({ empresas }: Props) {
                       onClick={() => { setShowActivarModal(e.id); setActivarMsg(""); }}
                     >
                       Activar Licencia
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      style={{ backgroundColor: "#059669", color: "#fff", border: "none", marginRight: "4px" }}
+                      onClick={() => handleBackup(e.id, e.razonSocial)}
+                    >
+                      Respaldo
                     </button>
                     <button
                       className={`btn btn-sm ${e.licenciaStatus === "suspendida" ? "btn-success" : "btn-danger"}`}

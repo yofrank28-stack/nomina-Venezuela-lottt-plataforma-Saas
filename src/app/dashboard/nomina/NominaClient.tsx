@@ -115,6 +115,29 @@ export default function NominaClient({ periodos, tasaBCV, canEdit, empresaId }: 
     } finally { setLoading(false); }
   }
 
+  async function handleCerrarPeriodo(periodoId: string, periodoLabel: string) {
+    if (!confirm(`¿CERRAR el período "${periodoLabel}"? \n\nEsta acción bloquea las ediciones del período para garantizar la integridad contable. Solo el Master podrá reopenlo si es necesario.`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/nomina/cerrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "cerrar_periodo", periodoId }),
+      });
+      const data = await res.json() as { success?: boolean; message?: string; error?: string };
+      if (!res.ok || !data.success) {
+        alert(data.error || "Error al cerrar período");
+        return;
+      }
+      alert(data.message || "Período cerrado exitosamente");
+      router.refresh();
+    } catch {
+      alert("Error de conexión");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function loadRecibos(periodoId: string) {
     if (selectedPeriodo === periodoId) { setSelectedPeriodo(null); setRecibos([]); return; }
     setLoadingRecibos(true);
@@ -180,10 +203,16 @@ export default function NominaClient({ periodos, tasaBCV, canEdit, empresaId }: 
                       </td>
                       <td>
                         <span className={`badge ${
+                          p.status === "cerrado" ? "badge-danger" :
                           p.status === "pagada" ? "badge-success" :
                           p.status === "aprobada" ? "badge-primary" :
                           p.status === "calculada" ? "badge-info" : "badge-neutral"
                         }`}>{p.status}</span>
+                        {p.status === "cerrado" && (
+                          <span className="text-muted text-sm" style={{ marginLeft: "6px", color: "#dc2626" }}>
+                            🔒 Cerrado
+                          </span>
+                        )}
                         {p.cantidadRecibos > 0 && (
                           <span className="text-muted text-sm" style={{ marginLeft: "6px" }}>
                             ({p.cantidadRecibos} recibos)
@@ -204,6 +233,15 @@ export default function NominaClient({ periodos, tasaBCV, canEdit, empresaId }: 
                           {canEdit && p.status === "calculada" && (
                             <button className="btn btn-success btn-sm" onClick={() => handleAprobar(p.id)}>
                               Aprobar
+                            </button>
+                          )}
+                          {canEdit && p.status !== "cerrado" && (p.status === "aprobada" || p.status === "pagada") && (
+                            <button 
+                              className="btn btn-sm" 
+                              style={{ backgroundColor: "#dc2626", color: "#fff", border: "none" }}
+                              onClick={() => handleCerrarPeriodo(p.id, `${MESES[p.mes]} ${p.anio}`)}
+                            >
+                              Cerrar Mes
                             </button>
                           )}
                           {p.cantidadRecibos > 0 && (
