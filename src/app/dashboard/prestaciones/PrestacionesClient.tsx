@@ -478,6 +478,60 @@ export default function PrestacionesClient({ registros, trabajadores, tasaBCV, t
           </div>
         </div>
       )}
+
+      <div className="card" style={{ marginTop: "24px" }}>
+        <div className="card-header">
+          <h2 className="card-title">Previsualización de Liquidación</h2>
+          <div className="text-muted text-sm">
+            Genera el documento de liquidación conforme a la LOTTT (Art. 142)
+          </div>
+        </div>
+        
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Trabajador</th>
+                <th>Cédula</th>
+                <th>Salario Base</th>
+                <th>Tiempo de Servicio</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {trabajadores.map((t) => {
+                const ingreso = new Date(t.fechaIngreso);
+                const hoy = new Date();
+                const diffDias = Math.floor((hoy.getTime() - ingreso.getTime()) / (1000 * 60 * 60 * 24));
+                const anios = Math.floor(diffDias / 365);
+                const meses = Math.floor((diffDias % 365) / 30);
+                const tiempo = `${anios} años, ${meses} meses`;
+                
+                return (
+                  <tr key={t.id}>
+                    <td style={{ fontWeight: 500 }}>
+                      {t.apellido}, {t.nombre}
+                    </td>
+                    <td className="text-mono">{t.cedula}</td>
+                    <td className="text-mono">Bs. {fmt(t.salarioBase)}</td>
+                    <td className="text-muted">{tiempo}</td>
+                    <td>
+                      <a
+                        href={`/api/liquidacion?trabajador_id=${t.id}`}
+                        target="_blank"
+                        className="btn btn-sm"
+                        style={{ backgroundColor: "#0047AB", color: "#fff", border: "none" }}
+                      >
+                        Ver Liquidación
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </>
   );
 }

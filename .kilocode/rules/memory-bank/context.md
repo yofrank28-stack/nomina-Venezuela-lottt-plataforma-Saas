@@ -108,3 +108,5 @@ src/
 | 2026-03-14 | BCV Widget integrado en header de todas las vistas internas |
 | 2026-03-14 | Aislamiento multi-empresa verificado: cada admin solo ve sus empleados (empresa_id) |
 | 2026-03-14 | Exportación: TXT Bancario ACH Banesco/Mercantil + PDF recibos con SSR |
+| 2026-03-14 | Previsualización de Liquidación: tabla con botón 'Ver Liquidación' por trabajador |
+| 2026-03-14 | PDF Liquidación: diseño LOTTT con Doble Vía, espacio para firma y sello empresarial |

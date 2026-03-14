@@ -291,3 +291,243 @@ export function generarHtmlRecibo(params: {
 </body>
 </html>`;
 }
+
+// ─── LIQUIDACIÓN PDF (LOTTT) ─────────────────────────────────────────────────
+export interface LiquidacionPdfData {
+  empresa: {
+    razonSocial: string;
+    rif: string;
+    direccion?: string | null;
+  };
+  trabajador: {
+    nombre: string;
+    apellido: string;
+    cedula: string;
+    fechaIngreso: string;
+    fechaEgreso: string;
+    cargo?: string | null;
+  };
+  liquidation: {
+    aniosServicio: number;
+    mesesServicio: number;
+    diasServicio: number;
+    prestacionesSociales: {
+      montoGarantiaTotal: number;
+      interesesTotal: number;
+      totalViaGarantia: number;
+      diasRetroactividad: number;
+      totalViaRetroactividad: number;
+      montoFinal: number;
+      viaAplicada: string;
+    };
+    vacaciones: {
+      diasVacaciones: number;
+      diasBonoVacacional: number;
+      montoVacaciones: number;
+      montoBonoVacacional: number;
+      montoTotal: number;
+    };
+    utilidadesProporcionales: number;
+    preaviso: number;
+    totalLiquidacion: number;
+    totalLiquidacionUSD: number;
+  };
+  tasaBCV: number;
+  fechaLiquidacion: string;
+}
+
+export function generarHtmlLiquidacion(data: LiquidacionPdfData): string {
+  const { empresa, trabajador, liquidation, tasaBCV, fechaLiquidacion } = data;
+  const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Liquidación de Prestaciones - ${trabajador.apellido}, ${trabajador.nombre}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #333; background: #fff; }
+    .liquidacion { max-width: 800px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; border-bottom: 3px solid #0047AB; padding-bottom: 15px; margin-bottom: 20px; }
+    .header h1 { font-size: 18px; color: #0047AB; margin-bottom: 5px; }
+    .header .empresa { font-size: 14px; font-weight: bold; }
+    .header .rif { font-size: 11px; color: #666; }
+    .section { margin-bottom: 20px; }
+    .section-title { background: #f0f7ff; padding: 8px 12px; font-weight: bold; font-size: 12px; color: #0047AB; border-left: 4px solid #0047AB; margin-bottom: 10px; }
+    .info-grid { display: table; width: 100%; }
+    .info-row { display: table-row; }
+    .info-label { display: table-cell; padding: 4px 8px; background: #f9f9f9; font-weight: bold; width: 35%; }
+    .info-value { display: table-cell; padding: 4px 8px; }
+    .doble-via { display: table; width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .doble-via th, .doble-via td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .doble-via th { background: #0047AB; color: #fff; font-size: 11px; }
+    .doble-via .garantia { background: #e8f5e9; }
+    .doble-via .retroactividad { background: #fff3e0; }
+    .doble-via .seleccionado { background: #c8e6c9; font-weight: bold; border: 2px solid #2e7d32; }
+    .total-box { background: #0047AB; color: #fff; padding: 15px; text-align: center; margin: 20px 0; border-radius: 4px; }
+    .total-box .label { font-size: 12px; text-transform: uppercase; }
+    .total-box .monto { font-size: 24px; font-weight: bold; }
+    .total-box .usd { font-size: 11px; opacity: 0.9; }
+    .firmas { display: table; width: 100%; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; }
+    .firma-box { display: table-cell; width: 50%; text-align: center; padding: 20px; }
+    .firma-line { border-top: 1px solid #333; padding-top: 8px; margin-top: 40px; font-size: 10px; }
+    .sello { width: 100px; height: 100px; border: 2px solid #0047AB; border-radius: 50%; display: inline-block; line-height: 100px; color: #0047AB; font-weight: bold; font-size: 10px; transform: rotate(-15deg); opacity: 0.7; }
+    .legal { font-size: 9px; color: #666; text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; }
+    .badge-garantia { background: #4caf50; color: #fff; }
+    .badge-retro { background: #ff9800; color: #fff; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+  <div class="liquidacion">
+    <div class="header">
+      <h1>LIQUIDACIÓN DE PRESTACIONES SOCIALES</h1>
+      <div class="empresa">${empresa.razonSocial}</div>
+      <div class="rif">RIF: ${empresa.rif}</div>
+      ${empresa.direccion ? `<div class="direccion">${empresa.direccion}</div>` : ''}
+    </div>
+
+    <div class="section">
+      <div class="section-title">DATOS DEL TRABAJADOR</div>
+      <div class="info-grid">
+        <div class="info-row">
+          <div class="info-label">Nombre y Apellido:</div>
+          <div class="info-value">${trabajador.apellido}, ${trabajador.nombre}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Cédula de Identidad:</div>
+          <div class="info-value">${trabajador.cedula}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Fecha de Ingreso:</div>
+          <div class="info-value">${trabajador.fechaIngreso}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Fecha de Egreso:</div>
+          <div class="info-value">${trabajador.fechaEgreso}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Tiempo de Servicio:</div>
+          <div class="info-value">${liquidation.aniosServicio} años, ${liquidation.mesesServicio} meses, ${liquidation.diasServicio} días</div>
+        </div>
+        ${trabajador.cargo ? `
+        <div class="info-row">
+          <div class="info-label">Cargo:</div>
+          <div class="info-value">${trabajador.cargo}</div>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">DOUBLE VÍA - PRESTACIONES SOCIALES (ART. 142 LOTTT)</div>
+      <table class="doble-via">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>Vía A: Garantía + Intereses</th>
+            <th>Vía B: Retroactividad</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="${liquidation.prestacionesSociales.viaAplicada === 'garantia' ? 'seleccionado' : 'garantia'}">
+            <td><strong>Garantía Acumulada</strong></td>
+            <td>Bs. ${fmt(liquidation.prestacionesSociales.montoGarantiaTotal)}</td>
+            <td rowspan="3" style="vertical-align: middle; background: #fff3e0;">
+              ${liquidation.prestacionesSociales.diasRetroactividad} días × Salario Integral
+            </td>
+          </tr>
+          <tr class="${liquidation.prestacionesSociales.viaAplicada === 'garantia' ? 'seleccionado' : 'garantia'}">
+            <td><strong>Intereses (Tasa Activa BCV)</strong></td>
+            <td>Bs. ${fmt(liquidation.prestacionesSociales.interesesTotal)}</td>
+          </tr>
+          <tr class="${liquidation.prestacionesSociales.viaAplicada === 'garantia' ? 'seleccionado' : 'retroactividad'}">
+            <td><strong>SUBTOTAL</strong></td>
+            <td><strong>Bs. ${fmt(liquidation.prestacionesSociales.totalViaGarantia)}</strong></td>
+            <td><strong>Bs. ${fmt(liquidation.prestacionesSociales.totalViaRetroactividad)}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top: 10px; text-align: center;">
+        <span class="badge ${liquidation.prestacionesSociales.viaAplicada === 'garantia' ? 'badge-garantia' : 'badge-retro'}">
+          ✓ SE APLICA ${liquidation.prestacionesSociales.viaAplicada === 'garantia' ? 'VÍA A (GARANTÍA + INTERESES)' : 'VÍA B (RETROACTIVIDAD)'}
+        </span>
+        <span style="margin-left: 15px; font-size: 11px;">
+          Mayor beneficio para el trabajador según Art. 142 literal f LOTTT
+        </span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">OTROS CONCEPTOS</div>
+      <table class="doble-via">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>Días</th>
+            <th class="text-right">Monto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Vacaciones (Art. 190 LOTTT)</td>
+            <td>${liquidation.vacaciones.diasVacaciones}</td>
+            <td class="text-right">Bs. ${fmt(liquidation.vacaciones.montoVacaciones)}</td>
+          </tr>
+          <tr>
+            <td>Bono Vacacional (Art. 192 LOTTT)</td>
+            <td>${liquidation.vacaciones.diasBonoVacacional}</td>
+            <td class="text-right">Bs. ${fmt(liquidation.vacaciones.montoBonoVacacional)}</td>
+          </tr>
+          <tr>
+            <td>Utilidades Proporcionales (Art. 131 LOTTT)</td>
+            <td>15</td>
+            <td class="text-right">Bs. ${fmt(liquidation.utilidadesProporcionales)}</td>
+          </tr>
+          ${liquidation.preaviso > 0 ? `
+          <tr>
+            <td>Preaviso (Art. 80 LOTTT)</td>
+            <td>Según tiempo de servicio</td>
+            <td class="text-right">Bs. ${fmt(liquidation.preaviso)}</td>
+          </tr>
+          ` : ''}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="total-box">
+      <div class="label">TOTAL LIQUIDACIÓN A PAGAR</div>
+      <div class="monto">Bs. ${fmt(liquidation.totalLiquidacion)}</div>
+      <div class="usd">Equivalente: $ ${liquidation.totalLiquidacionUSD.toFixed(2)} USD (Tasa BCV: ${tasaBCV})</div>
+    </div>
+
+    <div class="firmas">
+      <div class="firma-box">
+        <div class="sello">SELLO<br/>EMPRESA</div>
+        <div class="firma-line">
+          Firma y Sello del Empleador<br/>
+          <span style="font-size: 9px;">${empresa.razonSocial}</span>
+        </div>
+      </div>
+      <div class="firma-box">
+        <div class="firma-line">
+          Firma del Trabajador<br/>
+          <span style="font-size: 9px;">${trabajador.apellido}, ${trabajador.nombre} - C.I. ${trabajador.cedula}</span>
+        </div>
+        <div style="margin-top: 10px; border: 1px solid #333; height: 30px; width: 120px; margin: 10px auto;">
+          <span style="font-size: 8px; color: #999;">Huella</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="legal">
+      Documento generado conforme a la LOTTT (Ley Orgánica del Trabajo, los Trabajadores y las Trabajadoras - 2012).<br/>
+      Art. 142: Doble Vía de las Prestaciones Sociales | Art. 190-192: Vacaciones y Bono Vacacional | Art. 131-133: Utilidades<br/>
+      Liquidación generada el ${fechaLiquidacion} - Nómina Venezuela®
+    </div>
+  </div>
+</body>
+</html>`;
+}
