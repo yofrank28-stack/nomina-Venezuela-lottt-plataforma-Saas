@@ -128,6 +128,9 @@ export async function POST(request: NextRequest) {
         cantidad: h.cantidadHoras,
       }));
 
+      // IVSS: usar riesgo del trabajador si está configurado, sino usar empresa
+      const ivssPatronal = trab.ivssRiesgo ? trab.ivssRiesgo : empresa.ivssPatronal;
+      
       const resultado = calcularNomina({
         salarioBase: trab.salarioBase,
         diasTrabajados: 30,
@@ -137,7 +140,7 @@ export async function POST(request: NextRequest) {
         otrasAsignaciones: 0,
         adelantoQuincena: 0,
         otrasDeduciones: 0,
-        ivssPatronal: empresa.ivssPatronal,
+        ivssPatronal: ivssPatronal,
         ivssObrero: empresa.ivssObrero,
         rpePatronal: empresa.rpePatronal,
         rpeObrero: empresa.rpeObrero,

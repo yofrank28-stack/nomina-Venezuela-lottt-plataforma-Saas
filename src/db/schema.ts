@@ -121,6 +121,7 @@ export const trabajadores = sqliteTable(
     monedaSalario: text("moneda_salario").notNull().default("VES"), // VES | USD
     // IVSS
     nssIvss: text("nss_ivss"),
+    ivssRiesgo: real("ivss_riesgo"), // Porcentaje de riesgo: 9%, 10% o 11% (sobreescribe empresa)
     // Cesta Ticket
     cestaBono: real("cesta_bono").notNull().default(0),
     // Estado
