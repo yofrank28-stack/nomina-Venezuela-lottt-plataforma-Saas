@@ -110,3 +110,4 @@ src/
 | 2026-03-14 | Exportación: TXT Bancario ACH Banesco/Mercantil + PDF recibos con SSR |
 | 2026-03-14 | Previsualización de Liquidación: tabla con botón 'Ver Liquidación' por trabajador |
 | 2026-03-14 | PDF Liquidación: diseño LOTTT con Doble Vía, espacio para firma y sello empresarial |
+| 2026-03-14 | Centro de Ayuda / FAQ: respuestas sobre CEPP, Tasas BCV, Doble Vía, Cierre de Mes, Vacaciones |

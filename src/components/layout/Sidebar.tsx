@@ -161,6 +161,9 @@ export default function Sidebar({ rol, nombre, empresaNombre }: SidebarProps) {
             <Link href="/dashboard/tasas" className={`sidebar-link ${isActive("/dashboard/tasas") ? "active" : ""}`}>
               {ICONS.tasas} Tasas BCV
             </Link>
+            <Link href="/dashboard/ayuda" className={`sidebar-link ${isActive("/dashboard/ayuda") ? "active" : ""}`}>
+              {ICONS.config} Centro de Ayuda
+            </Link>
 
             {isAdmin && (
               <Link href="/dashboard/configuracion" className={`sidebar-link ${isActive("/dashboard/configuracion") ? "active" : ""}`}>
