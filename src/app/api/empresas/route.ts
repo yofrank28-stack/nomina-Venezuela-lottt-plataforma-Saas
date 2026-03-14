@@ -5,6 +5,7 @@ import { empresas, usuarios, centrosCosto, cargos } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
+import { sendEmail, generateWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   const session = await getSession();
@@ -68,6 +69,62 @@ export async function POST(request: NextRequest) {
       .where(eq(empresas.id, empresaId))
       .run();
     return NextResponse.json({ success: true });
+  }
+
+  if (accion === "activar_licencia") {
+    const empresaId = body.empresaId as string;
+    const meses = (body.meses as number) || 1;
+    const plan = (body.plan as string) || "basico";
+
+    // Get empresa info
+    const empresa = db.select().from(empresas).where(eq(empresas.id, empresaId)).get();
+    if (!empresa) {
+      return NextResponse.json({ error: "Empresa no encontrada" }, { status: 404 });
+    }
+
+    // Calculate expiration date
+    const hoy = new Date();
+    const expira = new Date(hoy);
+    expira.setMonth(expira.getMonth() + meses);
+
+    // Update license
+    db.update(empresas)
+      .set({
+        licenciaStatus: "activa",
+        licenciaExpira: expira.toISOString(),
+        planLicencia: plan,
+        actualizadoEn: new Date().toISOString(),
+      })
+      .where(eq(empresas.id, empresaId))
+      .run();
+
+    // Get admin user for the company
+    const admins = db.select().from(usuarios)
+      .where(eq(usuarios.empresaId, empresaId))
+      .all();
+    const admin = admins.find(u => u.rol === "admin") || admins[0];
+
+    // Send welcome email
+    let emailSent = false;
+    if (admin) {
+      const emailResult = await sendEmail(generateWelcomeEmail(
+        empresa.razonSocial,
+        empresa.rif,
+        admin.email,
+        plan,
+        meses
+      ));
+      emailSent = emailResult.success;
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      licenciaExpira: expira.toISOString(),
+      emailSent,
+      message: emailSent 
+        ? `Licencia activada por ${meses} mes(es). Email de bienvenida enviado.` 
+        : `Licencia activada por ${meses} mes(es). No se pudo enviar email.`
+    });
   }
 
   return NextResponse.json({ error: "acción no válida" }, { status: 400 });

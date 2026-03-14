@@ -22,6 +22,11 @@ interface Props { empresas: Empresa[]; }
 export default function MasterEmpresasClient({ empresas }: Props) {
   const router = useRouter();
   const [showModal, setShowModal] = useState(false);
+  const [showActivarModal, setShowActivarModal] = useState<string | null>(null);
+  const [activarMeses, setActivarMeses] = useState(1);
+  const [activarPlan, setActivarPlan] = useState("basico");
+  const [activando, setActivando] = useState(false);
+  const [activarMsg, setActivarMsg] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [filtro, setFiltro] = useState("");
@@ -57,6 +62,39 @@ export default function MasterEmpresasClient({ empresas }: Props) {
       body: JSON.stringify({ accion, empresaId }),
     });
     router.refresh();
+  }
+
+  async function handleActivarLicencia() {
+    if (!showActivarModal) return;
+    setActivando(true);
+    setActivarMsg("");
+    try {
+      const res = await fetch("/api/empresas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          accion: "activar_licencia", 
+          empresaId: showActivarModal,
+          meses: activarMeses,
+          plan: activarPlan,
+        }),
+      });
+      const data = await res.json() as { success?: boolean; message?: string; error?: string };
+      if (!res.ok || !data.success) {
+        setActivarMsg(data.error || "Error al activar licencia");
+        return;
+      }
+      setActivarMsg(data.message || "Licencia activada exitosamente");
+      setTimeout(() => {
+        setShowActivarModal(null);
+        setActivarMsg("");
+        router.refresh();
+      }, 2000);
+    } catch {
+      setActivarMsg("Error de conexión");
+    } finally {
+      setActivando(false);
+    }
   }
 
   const filtered = empresas.filter((e) =>
@@ -118,6 +156,13 @@ export default function MasterEmpresasClient({ empresas }: Props) {
                   </td>
                   <td className="text-muted text-sm">{new Date(e.creadoEn).toLocaleDateString("es-VE")}</td>
                   <td>
+                    <button
+                      className="btn btn-sm"
+                      style={{ backgroundColor: "#0047AB", color: "#fff", border: "none", marginRight: "4px" }}
+                      onClick={() => { setShowActivarModal(e.id); setActivarMsg(""); }}
+                    >
+                      Activar Licencia
+                    </button>
                     <button
                       className={`btn btn-sm ${e.licenciaStatus === "suspendida" ? "btn-success" : "btn-danger"}`}
                       onClick={() => handleToggle(e.id, e.licenciaStatus)}
@@ -188,6 +233,83 @@ export default function MasterEmpresasClient({ empresas }: Props) {
               <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
               <button className="btn btn-primary" onClick={handleCrear} disabled={saving}>
                 {saving ? "Registrando..." : "Crear Empresa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Activar Licencia */}
+      {showActivarModal && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !activando && setShowActivarModal(null)}>
+          <div className="modal" style={{ maxWidth: "450px" }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Activar Licencia — 30 Días</h3>
+              <button className="btn btn-secondary btn-sm" onClick={() => !activando && setShowActivarModal(null)} disabled={activando}>✕</button>
+            </div>
+            <div className="modal-body">
+              {activarMsg && (
+                <div className={`alert ${activarMsg.includes("Error") || activarMsg.includes("Error") ? "alert-danger" : "alert-success"}`}>
+                  {activarMsg}
+                </div>
+              )}
+              
+              <div className="alert alert-info" style={{ marginBottom: "16px" }}>
+                <strong>Nota:</strong> Al activar, se enviará un correo de bienvenida con el manual PDF al administrador de la empresa.
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Período de Licencia</label>
+                <select 
+                  className="form-select" 
+                  value={activarMeses} 
+                  onChange={(e) => setActivarMeses(Number(e.target.value))}
+                  disabled={activando}
+                >
+                  <option value={1}>30 días (1 mes)</option>
+                  <option value={3}>90 días (3 meses)</option>
+                  <option value={6}>180 días (6 meses)</option>
+                  <option value={12}>365 días (1 año)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Plan</label>
+                <select 
+                  className="form-select" 
+                  value={activarPlan} 
+                  onChange={(e) => setActivarPlan(e.target.value)}
+                  disabled={activando}
+                >
+                  <option value="basico">Básico — USD 15/mes</option>
+                  <option value="profesional">Profesional — USD 35/mes</option>
+                  <option value="empresarial">Empresarial — USD 80/mes</option>
+                </select>
+              </div>
+
+              <div style={{ 
+                marginTop: "16px", 
+                padding: "12px", 
+                background: "var(--color-bg-elevated)", 
+                borderRadius: "6px",
+                border: "1px solid var(--color-border)"
+              }}>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+                  La licencia se extenderá desde hoy por {activarMeses} mes(es).
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowActivarModal(null)} disabled={activando}>
+                Cancelar
+              </button>
+              <button 
+                className="btn" 
+                style={{ backgroundColor: "#0047AB", color: "#fff", border: "none" }}
+                onClick={handleActivarLicencia}
+                disabled={activando}
+              >
+                {activando ? "Activando..." : "Activar y Enviar Email"}
               </button>
             </div>
           </div>

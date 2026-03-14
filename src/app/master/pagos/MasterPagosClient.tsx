@@ -33,6 +33,7 @@ const METODO_LABELS: Record<string, string> = {
 export default function MasterPagosClient({ pagos }: Props) {
   const router = useRouter();
   const [filtroStatus, setFiltroStatus] = useState("pendiente");
+  const [filtroMetodo, setFiltroMetodo] = useState("");
   const [procesando, setProcesando] = useState<string | null>(null);
   const [notasRec, setNotasRec] = useState("");
   const [showReject, setShowReject] = useState<string | null>(null);
@@ -53,7 +54,11 @@ export default function MasterPagosClient({ pagos }: Props) {
     } finally { setProcesando(null); }
   }
 
-  const filtered = pagos.filter((p) => !filtroStatus || p.status === filtroStatus);
+  const filtered = pagos.filter((p) => {
+    const statusMatch = !filtroStatus || p.status === filtroStatus;
+    const metodoMatch = !filtroMetodo || p.metodoPago === filtroMetodo;
+    return statusMatch && metodoMatch;
+  });
 
   return (
     <>
@@ -80,6 +85,40 @@ export default function MasterPagosClient({ pagos }: Props) {
           ))}
           <button className={`btn ${filtroStatus === "" ? "btn-primary" : "btn-secondary"} btn-sm`}
             onClick={() => setFiltroStatus("")}>Todos</button>
+        </div>
+
+        <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)", alignSelf: "center" }}>Método:</span>
+          <button
+            className={`btn btn-sm ${filtroMetodo === "" ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setFiltroMetodo("")}
+          >
+            Todos
+          </button>
+          <button
+            className={`btn btn-sm ${filtroMetodo === "binance" ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setFiltroMetodo("binance")}
+          >
+            Binance ({pagos.filter(p => p.metodoPago === "binance").length})
+          </button>
+          <button
+            className={`btn btn-sm ${filtroMetodo === "pago_movil" ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setFiltroMetodo("pago_movil")}
+          >
+            Pago Móvil ({pagos.filter(p => p.metodoPago === "pago_movil").length})
+          </button>
+          <button
+            className={`btn btn-sm ${filtroMetodo === "zinli" ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setFiltroMetodo("zinli")}
+          >
+            Zinli ({pagos.filter(p => p.metodoPago === "zinli").length})
+          </button>
+          <button
+            className={`btn btn-sm ${filtroMetodo === "banesco_panama" ? "btn-primary" : "btn-secondary"}`}
+            onClick={() => setFiltroMetodo("banesco_panama")}
+          >
+            Banesco PA ({pagos.filter(p => p.metodoPago === "banesco_panama").length})
+          </button>
         </div>
 
         <div className="table-wrapper">
