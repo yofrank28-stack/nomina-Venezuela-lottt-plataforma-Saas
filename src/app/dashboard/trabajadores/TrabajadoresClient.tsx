@@ -160,12 +160,12 @@ export default function TrabajadoresClient({ trabajadores: initial, cargos, cent
                 <th>Banco</th>
                 <th>Ingreso</th>
                 <th>Estado</th>
-                {canEdit && <th></th>}
+                <th>ISLR</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={9} style={{ textAlign: "center", padding: "24px", color: "var(--color-text-muted)" }}>No hay trabajadores registrados.</td></tr>
+                <tr><td colSpan={10} style={{ textAlign: "center", padding: "24px", color: "var(--color-text-muted)" }}>No hay trabajadores registrados.</td></tr>
               ) : filtered.map((t) => (
                 <tr key={t.id}>
                   <td className="text-mono">{t.cedula}</td>
@@ -184,13 +184,24 @@ export default function TrabajadoresClient({ trabajadores: initial, cargos, cent
                       t.status === "suspendido" ? "badge-warning" : "badge-danger"
                     }`}>{t.status}</span>
                   </td>
-                  {canEdit && (
-                    <td>
-                      <button className="btn btn-secondary btn-sm" onClick={() => openEdit(t)}>
-                        Editar
-                      </button>
-                    </td>
-                  )}
+                  <td>
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      <a
+                        href={`/api/arc?trabajador_id=${t.id}`}
+                        target="_blank"
+                        className="btn btn-sm"
+                        style={{ backgroundColor: "#059669", color: "#fff", border: "none", fontSize: "10px", padding: "4px 8px" }}
+                        title="Comprobante Retenciones ISLR (ARC)"
+                      >
+                        ARC
+                      </a>
+                      {canEdit && (
+                        <button className="btn btn-secondary btn-sm" onClick={() => openEdit(t)}>
+                          Editar
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

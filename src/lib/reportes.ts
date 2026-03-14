@@ -531,3 +531,173 @@ export function generarHtmlLiquidacion(data: LiquidacionPdfData): string {
 </body>
 </html>`;
 }
+
+// ─── ARC - COMPROBANTE DE RETENCIONES ANUALES (ISLR) ─────────────────────────────
+export interface ArcData {
+  empresa: {
+    razonSocial: string;
+    rif: string;
+    direccion?: string | null;
+    telefono?: string | null;
+  };
+  trabajador: {
+    nombre: string;
+    apellido: string;
+    cedula: string;
+    fechaIngreso: string;
+  };
+  anioFiscal: number;
+  pagos: Array<{
+    mes: number;
+    montoBruto: number;
+    retencionIslr: number;
+    montoNeto: number;
+  }>;
+  totales: {
+    ingresoAnualBruto: number;
+    totalRetenido: number;
+    ingresoNetoAnual: number;
+  };
+  fechaEmision: string;
+}
+
+export function generarHtmlARC(data: ArcData): string {
+  const { empresa, trabajador, anioFiscal, pagos, totales, fechaEmision } = data;
+  const fmt = (n: number) => n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const MESES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ARC ${anioFiscal} - ${trabajador.apellido}, ${trabajador.nombre}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; font-size: 11px; line-height: 1.4; color: #333; background: #fff; }
+    .arc { max-width: 800px; margin: 0 auto; padding: 20px; }
+    .header { text-align: center; border-bottom: 3px solid #0047AB; padding-bottom: 15px; margin-bottom: 20px; }
+    .header h1 { font-size: 16px; color: #0047AB; margin-bottom: 5px; text-transform: uppercase; }
+    .header h2 { font-size: 14px; color: #333; margin-bottom: 10px; }
+    .header .empresa { font-size: 13px; font-weight: bold; }
+    .header .rif { font-size: 11px; color: #666; }
+    .section { margin-bottom: 20px; }
+    .section-title { background: #f0f7ff; padding: 8px 12px; font-weight: bold; font-size: 12px; color: #0047AB; border-left: 4px solid #0047AB; margin-bottom: 10px; }
+    .info-grid { display: table; width: 100%; }
+    .info-row { display: table-row; }
+    .info-label { display: table-cell; padding: 4px 8px; background: #f9f9f9; font-weight: bold; width: 35%; }
+    .info-value { display: table-cell; padding: 4px 8px; }
+    .table-arc { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .table-arc th, .table-arc td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 10px; }
+    .table-arc th { background: #0047AB; color: #fff; }
+    .table-arc .text-right { text-align: right; }
+    .total-box { background: #0047AB; color: #fff; padding: 15px; text-align: center; margin: 20px 0; border-radius: 4px; }
+    .total-box .label { font-size: 11px; text-transform: uppercase; }
+    .total-box .monto { font-size: 20px; font-weight: bold; }
+    .firmas { display: table; width: 100%; margin-top: 40px; border-top: 1px solid #333; padding-top: 20px; }
+    .firma-box { display: table-cell; width: 50%; text-align: center; padding: 20px; }
+    .firma-line { border-top: 1px solid #333; padding-top: 8px; margin-top: 40px; font-size: 10px; }
+    .legal { font-size: 9px; color: #666; text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; }
+    .sello { width: 80px; height: 80px; border: 2px solid #0047AB; border-radius: 50%; display: inline-block; line-height: 80px; color: #0047AB; font-weight: bold; font-size: 9px; transform: rotate(-15deg); opacity: 0.7; }
+    .nota { background: #fffde7; border: 1px solid #ffc107; padding: 10px; border-radius: 4px; font-size: 10px; margin-top: 15px; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  </style>
+</head>
+<body>
+  <div class="arc">
+    <div class="header">
+      <h1>COMPROBANTE DE RETENCIONES ANUALES</h1>
+      <h2>Impuesto Sobre la Renta (ISLR) - Ejercicio Fiscal ${anioFiscal}</h2>
+      <div class="empresa">${empresa.razonSocial}</div>
+      <div class="rif">RIF: ${empresa.rif}</div>
+      ${empresa.direccion ? `<div style="font-size: 10px; color: #666;">${empresa.direccion}</div>` : ''}
+    </div>
+
+    <div class="section">
+      <div class="section-title">DATOS DEL TRABAJADOR</div>
+      <div class="info-grid">
+        <div class="info-row">
+          <div class="info-label">Apellidos y Nombres:</div>
+          <div class="info-value">${trabajador.apellido}, ${trabajador.nombre}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Cédula de Identidad:</div>
+          <div class="info-value">${trabajador.cedula}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Fecha de Ingreso:</div>
+          <div class="info-value">${trabajador.fechaIngreso}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Ejercicio Fiscal:</div>
+          <div class="info-value">${anioFiscal}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">DETALLE DE RETENCIONES MENSUALES - ISLR</div>
+      <table class="table-arc">
+        <thead>
+          <tr>
+            <th>Mes</th>
+            <th class="text-right">Ingreso Bruto</th>
+            <th class="text-right">Retención ISLR</th>
+            <th class="text-right">Ingreso Neto</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pagos.map(p => `
+          <tr>
+            <td>${MESES[p.mes]}</td>
+            <td class="text-right">Bs. ${fmt(p.montoBruto)}</td>
+            <td class="text-right">Bs. ${fmt(p.retencionIslr)}</td>
+            <td class="text-right">Bs. ${fmt(p.montoNeto)}</td>
+          </tr>
+          `).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="font-weight: bold; background: #f0f7ff;">
+            <td>TOTALES</td>
+            <td class="text-right">Bs. ${fmt(totales.ingresoAnualBruto)}</td>
+            <td class="text-right">Bs. ${fmt(totales.totalRetenido)}</td>
+            <td class="text-right">Bs. ${fmt(totales.ingresoNetoAnual)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="total-box">
+      <div class="label">TOTAL RETENCIONES ISLR EJERCICIO ${anioFiscal}</div>
+      <div class="monto">Bs. ${fmt(totales.totalRetenido)}</div>
+    </div>
+
+    <div class="nota">
+      <strong>Nota:</strong> Este comprobante certifica las retenciones de ISLR realizadas durante el ejercicio fiscal ${anioFiscal}.
+      El trabajador podrá utilizar este documento para su declaración de ingresos ante el SENIAT.
+    </div>
+
+    <div class="firmas">
+      <div class="firma-box">
+        <div class="sello">SELLO<br/>EMPRESA</div>
+        <div class="firma-line">
+          Firma y Sello del Empleador<br/>
+          <span style="font-size: 9px;">${empresa.razonSocial}</span>
+        </div>
+      </div>
+      <div class="firma-box">
+        <div class="firma-line">
+          Firma del Trabajador<br/>
+          <span style="font-size: 9px;">${trabajador.apellido}, ${trabajador.nombre} - C.I. ${trabajador.cedula}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="legal">
+      Documento generado conforme a la Ley de Impuesto Sobre la Renta (LISLR) y su Reglamento.<br/>
+      Comprobante de Retenciones Annual (ARC) - Ejercicio Fiscal ${anioFiscal}<br/>
+      Fecha de emisión: ${fechaEmision} - Nómina Venezuela®
+    </div>
+  </div>
+</body>
+</html>`;
+}

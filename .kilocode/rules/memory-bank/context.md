@@ -23,6 +23,9 @@ arquitectura monolítica ligera SSR (Next.js 16 + better-sqlite3).
 - [x] Reportes: recibo HTML (printable), Libro Salarios TXT, ACH Banesco/Mercantil, TIUNA/IVSS, BANAVIH/LPH
 - [x] Diseño Enterprise: CSS custom sin animaciones, alta legibilidad, sidebar responsivo
 - [x] Seed inicial: 3 usuarios demo + empresa demo + 3 trabajadores + tasas BCV
+- [x] **NUEVO**: Centro de Ayuda FAQ - CEPP 9%, Tasas BCV, Doble Vía, Cierre de Mes
+- [x] **NUEVO**: ARC/ISLR - Comprobante de Retenciones Anual con detalle mensual
+- [x] **NUEVO**: PDFs consistentes - Recibos, Liquidaciones, ARC con membrete empresarial
 
 ## Credenciales Demo
 
