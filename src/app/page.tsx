@@ -1,3 +1,9 @@
-export default function Home() {
-  return <main className="min-h-screen bg-neutral-900" />;
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+
+export default async function Home() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (session.rol === "master") redirect("/master");
+  redirect("/dashboard");
 }
