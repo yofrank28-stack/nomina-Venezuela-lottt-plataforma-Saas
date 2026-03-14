@@ -39,7 +39,16 @@ export default async function PrestacionesPage() {
   .orderBy(desc(prestacionesSociales.creadoEn))
   .all();
 
-  const listaTrabajadores = db.select({ id: trabajadores.id, nombre: trabajadores.nombre, apellido: trabajadores.apellido, cedula: trabajadores.cedula, salarioBase: trabajadores.salarioBase, fechaIngreso: trabajadores.fechaIngreso })
+  const listaTrabajadores = db.select({ 
+      id: trabajadores.id, 
+      nombre: trabajadores.nombre, 
+      apellido: trabajadores.apellido, 
+      cedula: trabajadores.cedula, 
+      salarioBase: trabajadores.salarioBase, 
+      fechaIngreso: trabajadores.fechaIngreso,
+      banco: trabajadores.banco,
+      numeroCuentaBancaria: trabajadores.numeroCuentaBancaria,
+    })
     .from(trabajadores)
     .where(and(eq(trabajadores.empresaId, empresaId), eq(trabajadores.status, "activo")))
     .all();

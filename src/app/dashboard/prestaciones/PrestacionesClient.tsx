@@ -30,6 +30,8 @@ interface TrabajadorBasic {
   cedula: string;
   salarioBase: number;
   fechaIngreso: string;
+  banco: string | null;
+  numeroCuentaBancaria: string | null;
 }
 
 interface Props {
@@ -44,11 +46,14 @@ export default function PrestacionesClient({ registros, trabajadores, tasaBCV, t
   const router = useRouter();
   const [showCalc, setShowCalc] = useState(false);
   const [showLiq, setShowLiq] = useState(false);
+  const [showBancario, setShowBancario] = useState(false);
   const [selectedTrab, setSelectedTrab] = useState("");
   const [diasUtil, setDiasUtil] = useState(15);
   const [calcResult, setCalcResult] = useState<ReturnType<typeof calcularPrestacionesSociales> | null>(null);
   const [liqResult, setLiqResult] = useState<ReturnType<typeof calcularLiquidacion> | null>(null);
   const [motivoEgreso, setMotivoEgreso] = useState("renuncia");
+  const [bancoSeleccionado, setBancoSeleccionado] = useState<"banesco" | "mercantil">("banesco");
+  const [alertIncompleta, setAlertIncompleta] = useState<string | null>(null);
 
   function calcularSimulacion() {
     const trab = trabajadores.find((t) => t.id === selectedTrab);
@@ -87,8 +92,93 @@ export default function PrestacionesClient({ registros, trabajadores, tasaBCV, t
     setLiqResult(result);
   }
 
+  function generarTxtIntereses() {
+    const hoy = new Date();
+    const mesActual = hoy.getMonth() + 1;
+    const anioActual = hoy.getFullYear();
+
+    const interesesMes = registros.filter(r => {
+      const fecha = new Date(r.creadoEn);
+      return fecha.getMonth() + 1 === mesActual && fecha.getFullYear() === anioActual;
+    });
+
+    if (interesesMes.length === 0) {
+      setAlertIncompleta("No hay intereses de prestaciones registrados en el mes actual.");
+      return;
+    }
+
+    const trabajadoresConCuenta = interesesMes.map(r => {
+      const trab = trabajadores.find(t => t.id === r.trabajadorId);
+      return {
+        ...r,
+        nombre: trab ? `${trab.apellido} ${trab.nombre}` : "Desconocido",
+        cedula: trab?.cedula || "",
+        banco: trab?.banco || "",
+        numeroCuenta: trab?.numeroCuentaBancaria || "",
+      };
+    }).filter(t => t.numeroCuenta && t.numeroCuenta.length === 20);
+
+    const incompletos = trabajadoresConCuenta.filter(t => 
+      !t.banco || !t.numeroCuenta || t.numeroCuenta.length !== 20
+    );
+
+    if (incompletos.length > 0) {
+      setAlertIncompleta(`Ficha Incompleta: ${incompletos.length} empleado(s) sin cuenta bancaria de 20 dígitos.`);
+      return;
+    }
+
+    if (trabajadoresConCuenta.length === 0) {
+      setAlertIncompleta("Ningún empleado tiene cuenta bancaria registrada de 20 dígitos.");
+      return;
+    }
+
+    const montoTotal = trabajadoresConCuenta.reduce((a, t) => a + t.interesesGarantia, 0);
+
+    const lines: string[] = [];
+    const fechaFormato = `${anioActual}${String(mesActual).padStart(2, "0")}${String(hoy.getDate()).padStart(2, "0")}`;
+
+    if (bancoSeleccionado === "banesco") {
+      lines.push(`1EMPRESA DEMO CA${fechaFormato}${"INTERESES".padEnd(15)}${String(trabajadoresConCuenta.length).padStart(6, "0")}`);
+      for (const reg of trabajadoresConCuenta) {
+        const cedula = reg.cedula.replace(/[V-v]/g, "").padStart(9, "0");
+        const nombre = reg.nombre.toUpperCase().substring(0, 30).padEnd(30);
+        const cuenta = reg.numeroCuenta!.padStart(20, "0");
+        const monto = Math.round(reg.interesesGarantia * 100).toString().padStart(15, "0");
+        lines.push(`2${cedula}${nombre}${cuenta}${monto}01`);
+      }
+      const totalMonto = Math.round(montoTotal * 100).toString().padStart(15, "0");
+      lines.push(`9${String(trabajadoresConCuenta.length).padStart(6, "0")}${totalMonto}`);
+    } else {
+      lines.push(`HDREMPRESA DEMO CA${fechaFormato}${"INTERESES".padStart(10, " ")}${String(trabajadoresConCuenta.length).padStart(8, "0")}`);
+      for (const reg of trabajadoresConCuenta) {
+        const cedula = reg.cedula.replace(/[V-v]/g, "").padStart(10, "0");
+        const nombre = reg.nombre.toUpperCase().substring(0, 40).padEnd(40);
+        const cuenta = reg.numeroCuenta!.padStart(20, "0");
+        const monto = reg.interesesGarantia.toFixed(2).padStart(18, "0");
+        lines.push(`DET${cedula}${nombre}${cuenta}${monto}`);
+      }
+      const total = montoTotal.toFixed(2).padStart(18, "0");
+      lines.push(`TRL${String(trabajadoresConCuenta.length).padStart(8, "0")}${total}`);
+    }
+
+    const blob = new Blob([lines.join("\r\n")], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `intereses_prestaciones_${bancoSeleccionado}_${fechaFormato}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowBancario(false);
+    setAlertIncompleta(null);
+  }
+
   const fmt = formatBs;
   const totalGarantia = registros.reduce((a, r) => a + r.montoFinal, 0);
+  const interesesMesActual = registros.filter(r => {
+    const fecha = new Date(r.creadoEn);
+    const hoy = new Date();
+    return fecha.getMonth() + 1 === hoy.getMonth() + 1 && fecha.getFullYear() === hoy.getFullYear();
+  }).reduce((a, r) => a + r.interesesGarantia, 0);
 
   return (
     <>
@@ -121,6 +211,13 @@ export default function PrestacionesClient({ registros, trabajadores, tasaBCV, t
             </button>
           </>
         )}
+        <button 
+          className="btn btn-sm" 
+          style={{ backgroundColor: "#0047AB", color: "#fff", border: "none" }}
+          onClick={() => { setShowBancario(true); setAlertIncompleta(null); }}
+        >
+          Generar TXT Bancario Intereses
+        </button>
       </div>
 
       <div className="card">
@@ -314,6 +411,69 @@ export default function PrestacionesClient({ registros, trabajadores, tasaBCV, t
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowLiq(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Exportación Bancaria Intereses */}
+      {showBancario && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowBancario(false)}>
+          <div className="modal" style={{ maxWidth: "500px" }}>
+            <div className="modal-header">
+              <h3 className="modal-title">Exportar Intereses de Prestaciones — TXT Bancario</h3>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowBancario(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {alertIncompleta && (
+                <div className="alert alert-danger" style={{ marginBottom: "16px" }}>
+                  ⚠️ {alertIncompleta}
+                </div>
+              )}
+              
+              <div className="form-group">
+                <label className="form-label">Seleccionar Banco</label>
+                <select 
+                  className="form-select" 
+                  value={bancoSeleccionado} 
+                  onChange={(e) => setBancoSeleccionado(e.target.value as "banesco" | "mercantil")}
+                >
+                  <option value="banesco">Banesco</option>
+                  <option value="mercantil">Mercantil</option>
+                </select>
+              </div>
+
+              <div style={{ 
+                marginTop: "20px", 
+                padding: "16px", 
+                background: "var(--color-bg-elevated)", 
+                borderRadius: "6px",
+                border: "1px solid var(--color-border)"
+              }}>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+                  Monto Total a Dispersar (Intereses del Mes)
+                </div>
+                <div style={{ fontSize: "24px", fontWeight: 700, color: "#0047AB" }}>
+                  Bs. {fmt(interesesMesActual)}
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginTop: "4px" }}>
+                  ≈ USD {(interesesMesActual / tasaBCV).toFixed(2)}
+                </div>
+              </div>
+
+              <div style={{ marginTop: "16px", fontSize: "12px", color: "var(--color-text-muted)" }}>
+                <p>El archivo incluirá solo empleados con cuenta bancaria de 20 dígitos registrada.</p>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowBancario(false)}>Cancelar</button>
+              <button 
+                className="btn" 
+                style={{ backgroundColor: "#0047AB", color: "#fff", border: "none" }}
+                onClick={generarTxtIntereses}
+              >
+                Descargar TXT
+              </button>
             </div>
           </div>
         </div>

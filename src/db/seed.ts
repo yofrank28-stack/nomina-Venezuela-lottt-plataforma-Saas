@@ -55,12 +55,60 @@ async function seed() {
     VALUES (?, ?, ?, ?)
   `).run(cargoId, empresaId, "Asistente Administrativo", "operativo");
 
-  // Trabajador demo
-  const trabId = randomUUID();
+  // Trabajadores demo con cuentas bancarias de 20 dígitos
+  const trab1Id = randomUUID();
   sqlite.prepare(`
-    INSERT OR IGNORE INTO trabajadores (id, empresa_id, cedula, nombre, apellido, fecha_ingreso, salario_base, cargo_id, centro_costo_id, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'activo')
-  `).run(trabId, empresaId, "V-12345678", "Pedro", "Martínez", "2023-01-15", 500, cargoId, ccId);
+    INSERT OR IGNORE INTO trabajadores (id, empresa_id, cedula, nombre, apellido, fecha_ingreso, salario_base, cargo_id, centro_costo_id, banco, numero_cuenta_bancaria, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'activo')
+  `).run(trab1Id, empresaId, "V-12345678", "Juan", "Pérez", "2023-01-15", 5000, cargoId, ccId, "banesco", "0001-00001234-5678901234");
+
+  const trab2Id = randomUUID();
+  sqlite.prepare(`
+    INSERT OR IGNORE INTO trabajadores (id, empresa_id, cedula, nombre, apellido, fecha_ingreso, salario_base, cargo_id, centro_costo_id, banco, numero_cuenta_bancaria, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'activo')
+  `).run(trab2Id, empresaId, "V-23456789", "María", "López", "2023-03-20", 4500, cargoId, ccId, "mercantil", "0005-00005678-9012345678");
+
+  const trab3Id = randomUUID();
+  sqlite.prepare(`
+    INSERT OR IGNORE INTO trabajadores (id, empresa_id, cedula, nombre, apellido, fecha_ingreso, salario_base, cargo_id, centro_costo_id, banco, numero_cuenta_bancaria, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'activo')
+  `).run(trab3Id, empresaId, "V-34567890", "Carlos", "Ruíz", "2023-06-10", 3000, cargoId, ccId, "banesco", "0001-00009012-3456789012");
+
+  // Eliminar trabajador demo anterior sin banco
+  sqlite.prepare(`DELETE FROM trabajadores WHERE numero_cuenta_bancaria IS NULL OR numero_cuenta_bancaria = ''`).run();
+
+  // Agregar intereses de prestaciones para el mes actual
+  const hoy = new Date();
+  const trabs = sqlite.prepare(`SELECT id, salario_base, fecha_ingreso FROM trabajadores WHERE empresa_id = ?`).all(empresaId) as { id: string; salario_base: number; fecha_ingreso: string }[];
+  
+  for (const trab of trabs) {
+    const ingreso = new Date(trab.fecha_ingreso);
+    const diffDias = Math.floor((hoy.getTime() - ingreso.getTime()) / (1000 * 60 * 60 * 24));
+    const anios = Math.floor(diffDias / 365);
+    const trimestres = Math.floor(diffDias / 90);
+    const salarioDiario = trab.salario_base / 30;
+    
+    // Calcular intereses del trimestre actual
+    const diasGarantiaTrimestre = 15;
+    const montoGarantiaTrimestre = diasGarantiaTrimestre * (salarioDiario * 1.1); // aproximado salario integral
+    const TASA_MENSUAL = 58.30 / 100 / 12;
+    const interesesTrimestre = montoGarantiaTrimestre * TASA_MENSUAL;
+    
+    sqlite.prepare(`
+      INSERT OR IGNORE INTO prestaciones_sociales 
+        (id, empresa_id, trabajador_id, anio, trimestre, salario_diario_integral, dias_garantia, monto_garantia, intereses_garantia, tasa_interes_aplicada, dias_retroactividad, monto_retroactividad, monto_final, via_aplicada, creado_en)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      randomUUID(), empresaId, trab.id, 
+      hoy.getFullYear(), Math.ceil((hoy.getMonth() + 1) / 3),
+      salarioDiario * 1.1, diasGarantiaTrimestre, montoGarantiaTrimestre,
+      interesesTrimestre, 58.30,
+      anios * 30, (anios * 30) * (salarioDiario * 1.1),
+      Math.max(montoGarantiaTrimestre + interesesTrimestre, anios * 30 * salarioDiario * 1.1),
+      montoGarantiaTrimestre + interesesTrimestre > anios * 30 * salarioDiario * 1.1 ? "garantia" : "retroactividad",
+      hoy.toISOString()
+    );
+  }
 
   // Tasa BCV demo
   const tasaId = randomUUID();
