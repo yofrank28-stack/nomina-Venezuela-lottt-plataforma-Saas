@@ -40,12 +40,13 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-box">
         <div className="login-logo">
+          <div className="login-logo-icon">₿</div>
           <h1>Nómina Venezuela</h1>
           <p>Plataforma SaaS de Nómina LOTTT</p>
         </div>
 
         {error && (
-          <div className="alert alert-danger" style={{ marginBottom: "16px" }}>
+          <div className="alert alert-danger" style={{ marginBottom: "20px" }}>
             {error}
           </div>
         )}
@@ -53,7 +54,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="email">
-              Correo Electrónico <span className="required">*</span>
+              Correo Electrónico
             </label>
             <input
               id="email"
@@ -69,7 +70,7 @@ export default function LoginPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="password">
-              Contraseña <span className="required">*</span>
+              Contraseña
             </label>
             <input
               id="password"
@@ -86,20 +87,40 @@ export default function LoginPage() {
           <button
             type="submit"
             className="btn btn-primary w-full"
-            style={{ justifyContent: "center", marginTop: "8px", padding: "10px" }}
+            style={{ justifyContent: "center", marginTop: "8px", padding: "12px", fontSize: "14px" }}
             disabled={loading}
           >
-            {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            {loading ? (
+              <span className="loading-spinner" style={{ width: 16, height: 16 }}></span>
+            ) : (
+              "Iniciar Sesión"
+            )}
           </button>
         </form>
 
-        <div style={{ marginTop: "24px", borderTop: "1px solid var(--color-border)", paddingTop: "16px" }}>
-          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", textAlign: "center" }}>
+        <div style={{ marginTop: "28px", borderTop: "1px solid var(--color-border)", paddingTop: "16px" }}>
+          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", textAlign: "center", lineHeight: 1.6 }}>
             Sistema protegido. Acceso restringido a usuarios autorizados.
           </p>
-          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", textAlign: "center", marginTop: "4px" }}>
+          <p style={{ fontSize: "11px", color: "var(--color-text-muted)", textAlign: "center", marginTop: "8px" }}>
             Conforme a la LOTTT (2012) y normativas BCV vigentes.
           </p>
+        </div>
+
+        <div style={{ 
+          marginTop: "20px", 
+          padding: "12px", 
+          background: "var(--color-primary-dark)", 
+          borderRadius: "6px",
+          fontSize: "11px",
+          color: "var(--color-text-secondary)"
+        }}>
+          <div style={{ fontWeight: 600, marginBottom: "8px", color: "var(--color-text)" }}>Credenciales Demo:</div>
+          <div style={{ display: "grid", gap: "4px" }}>
+            <div><span style={{ color: "var(--color-secondary)" }}>Master:</span> master@nominavenezuela.com</div>
+            <div><span style={{ color: "var(--color-secondary)" }}>Admin:</span> admin@empresa.com</div>
+            <div><span style={{ color: "var(--color-text-muted)" }}>Password:</span> Master@2024! / Admin@2024!</div>
+          </div>
         </div>
       </div>
     </div>

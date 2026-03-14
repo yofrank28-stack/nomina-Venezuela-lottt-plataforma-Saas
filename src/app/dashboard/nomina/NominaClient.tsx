@@ -46,7 +46,24 @@ export default function NominaClient({ periodos, tasaBCV, canEdit, empresaId }: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedPeriodo, setSelectedPeriodo] = useState<string | null>(null);
-  const [recibos, setRecibos] = useState<Array<{ id: string; nombre: string | null; apellido: string | null; cedula: string | null; salarioBase: number; totalAsignaciones: number; totalDeducciones: number; salarioNeto: number; salarioNetoUsd: number | null; status: string }>>([]);
+  const [recibos, setRecibos] = useState<Array<{
+    id: string;
+    nombre: string | null;
+    apellido: string | null;
+    cedula: string | null;
+    salarioBase: number;
+    cestaBono: number;
+    horasExtrasMonto: number;
+    totalAsignaciones: number;
+    ivssObrero: number;
+    rpeObrero: number;
+    lphObrero: number;
+    contribucionPensiones: number;
+    totalDeducciones: number;
+    salarioNeto: number;
+    salarioNetoUsd: number | null;
+    status: string;
+  }>>([]);
   const [loadingRecibos, setLoadingRecibos] = useState(false);
 
   async function handleCrearPeriodo() {
@@ -212,52 +229,56 @@ export default function NominaClient({ periodos, tasaBCV, canEdit, empresaId }: 
 
                     {selectedPeriodo === p.id && (
                       <tr key={`${p.id}-recibos`}>
-                        <td colSpan={7} style={{ padding: "0", background: "#f8fafc", borderBottom: "2px solid var(--color-border)" }}>
+                        <td colSpan={7} style={{ padding: "0", background: "var(--color-primary-dark)", borderBottom: "2px solid var(--color-border)" }}>
                           {loadingRecibos ? (
                             <div style={{ padding: "16px", textAlign: "center", color: "var(--color-text-muted)" }}>Cargando recibos...</div>
                           ) : (
-                            <table className="data-table" style={{ margin: 0, border: "none" }}>
+                            <table className="data-table" style={{ margin: 0, border: "none", background: "transparent" }}>
                               <thead>
                                 <tr>
-                                  <th style={{ paddingLeft: "32px" }}>Trabajador</th>
-                                  <th className="text-right">Asignaciones</th>
-                                  <th className="text-right">Deducciones</th>
-                                  <th className="text-right">Neto (Bs.)</th>
-                                  <th className="text-right">Neto (USD)</th>
-                                  <th></th>
+                                  <th style={{ paddingLeft: "24px" }}>Trabajador</th>
+                                  <th className="text-right">Salario Normal</th>
+                                  <th className="text-right">Cesta/Bono</th>
+                                  <th className="text-right">Hrs. Extra</th>
+                                  <th className="text-right">IVSS (4%)</th>
+                                  <th className="text-right">RPE</th>
+                                  <th className="text-right">LPH</th>
+                                  <th className="text-right" style={{ color: "var(--color-warning)" }}>CEPP (9%)</th>
+                                  <th className="text-right">Neto</th>
+                                  <th className="text-right">USD</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {recibos.map((r) => (
                                   <tr key={r.id}>
-                                    <td style={{ paddingLeft: "32px" }}>
+                                    <td style={{ paddingLeft: "24px" }}>
                                       {r.apellido}, {r.nombre}
                                       <span className="text-muted text-sm" style={{ marginLeft: "6px" }}>{r.cedula}</span>
                                     </td>
-                                    <td className="text-right text-mono">Bs. {fmt(r.totalAsignaciones)}</td>
-                                    <td className="text-right text-mono text-danger">Bs. {fmt(r.totalDeducciones)}</td>
+                                    <td className="text-right text-mono">Bs. {fmt(r.salarioBase)}</td>
+                                    <td className="text-right text-mono">Bs. {fmt(r.cestaBono)}</td>
+                                    <td className="text-right text-mono">Bs. {fmt(r.horasExtrasMonto)}</td>
+                                    <td className="text-right text-mono text-danger">Bs. {fmt(r.ivssObrero)}</td>
+                                    <td className="text-right text-mono text-danger">Bs. {fmt(r.rpeObrero)}</td>
+                                    <td className="text-right text-mono text-danger">Bs. {fmt(r.lphObrero)}</td>
+                                    <td className="text-right text-mono" style={{ color: "var(--color-warning)", fontWeight: 600 }}>Bs. {fmt(r.contribucionPensiones)}</td>
                                     <td className="text-right text-mono font-bold">Bs. {fmt(r.salarioNeto)}</td>
                                     <td className="text-right text-mono text-muted">$ {(r.salarioNetoUsd || 0).toFixed(2)}</td>
-                                    <td>
-                                      <a
-                                        href={`/api/reportes?tipo=recibo&recibo_id=${r.id}`}
-                                        className="btn btn-secondary btn-sm"
-                                        target="_blank"
-                                      >
-                                        Ver Recibo
-                                      </a>
-                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
                               <tfoot>
-                                <tr style={{ background: "#f1f5f9", fontWeight: 700 }}>
-                                  <td style={{ paddingLeft: "32px" }}>TOTALES ({recibos.length} trabajadores)</td>
-                                  <td className="text-right text-mono">Bs. {fmt(recibos.reduce((a, r) => a + r.totalAsignaciones, 0))}</td>
-                                  <td className="text-right text-mono">Bs. {fmt(recibos.reduce((a, r) => a + r.totalDeducciones, 0))}</td>
+                                <tr style={{ background: "var(--color-surface-elevated)", fontWeight: 700 }}>
+                                  <td style={{ paddingLeft: "24px" }}>TOTALES ({recibos.length} trabajadores)</td>
+                                  <td className="text-right text-mono">Bs. {fmt(recibos.reduce((a, r) => a + r.salarioBase, 0))}</td>
+                                  <td className="text-right text-mono">Bs. {fmt(recibos.reduce((a, r) => a + r.cestaBono, 0))}</td>
+                                  <td className="text-right text-mono">Bs. {fmt(recibos.reduce((a, r) => a + r.horasExtrasMonto, 0))}</td>
+                                  <td className="text-right text-mono text-danger">Bs. {fmt(recibos.reduce((a, r) => a + r.ivssObrero, 0))}</td>
+                                  <td className="text-right text-mono text-danger">Bs. {fmt(recibos.reduce((a, r) => a + r.rpeObrero, 0))}</td>
+                                  <td className="text-right text-mono text-danger">Bs. {fmt(recibos.reduce((a, r) => a + r.lphObrero, 0))}</td>
+                                  <td className="text-right text-mono" style={{ color: "var(--color-warning)" }}>Bs. {fmt(recibos.reduce((a, r) => a + r.contribucionPensiones, 0))}</td>
                                   <td className="text-right text-mono">Bs. {fmt(recibos.reduce((a, r) => a + r.salarioNeto, 0))}</td>
                                   <td className="text-right text-mono">$ {fmt(recibos.reduce((a, r) => a + (r.salarioNetoUsd || 0), 0))}</td>
-                                  <td></td>
                                 </tr>
                               </tfoot>
                             </table>
