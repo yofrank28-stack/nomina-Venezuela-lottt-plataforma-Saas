@@ -253,13 +253,41 @@ export default function NominaClient({ periodos, tasaBCV, canEdit, empresaId }: 
                             </button>
                           )}
                           {(p.status === "calculada" || p.status === "aprobada" || p.status === "pagada") && (
-                            <a
-                              href={`/api/reportes?tipo=libro_salarios&periodo_id=${p.id}`}
-                              className="btn btn-secondary btn-sm"
-                              target="_blank"
-                            >
-                              .TXT
-                            </a>
+                            <>
+                              <a
+                                href={`/api/reportes?tipo=libro_salarios&periodo_id=${p.id}`}
+                                className="btn btn-secondary btn-sm"
+                                target="_blank"
+                              >
+                                .TXT
+                              </a>
+                              <a
+                                href={`/api/reportes?tipo=ach_banesco&periodo_id=${p.id}`}
+                                className="btn btn-sm"
+                                style={{ backgroundColor: "#0047AB", color: "#fff", border: "none" }}
+                                target="_blank"
+                                title="Exportar a Banesco"
+                              >
+                                ACH Banesco
+                              </a>
+                              <a
+                                href={`/api/reportes?tipo=ach_mercantil&periodo_id=${p.id}`}
+                                className="btn btn-sm"
+                                style={{ backgroundColor: "#059669", color: "#fff", border: "none" }}
+                                target="_blank"
+                                title="Exportar a Mercantil"
+                              >
+                                ACH Mercantil
+                              </a>
+                              <a
+                                href={`/api/reportes?tipo=recibos_pdf&periodo_id=${p.id}`}
+                                className="btn btn-secondary btn-sm"
+                                target="_blank"
+                                title="Recibos en PDF"
+                              >
+                                PDF
+                              </a>
+                            </>
                           )}
                         </div>
                       </td>

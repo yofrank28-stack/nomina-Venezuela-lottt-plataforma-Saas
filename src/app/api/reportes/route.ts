@@ -229,5 +229,105 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  // ─── RECIBOS PDF (TODOS LOS RECIBOS DE UN PERÍODO) ───────────────────────────
+  if (tipo === "recibos_pdf" && periodoId) {
+    const periodo = db.select().from(periodosNomina)
+      .where(and(eq(periodosNomina.id, periodoId), eq(periodosNomina.empresaId, eid)))
+      .get();
+    if (!periodo) return NextResponse.json({ error: "Período no encontrado" }, { status: 404 });
+
+    const recibosData = db.select({
+      id: recibosPago.id,
+      empresaId: recibosPago.empresaId,
+      periodoId: recibosPago.periodoId,
+      trabajadorId: recibosPago.trabajadorId,
+      salarioBase: recibosPago.salarioBase,
+      diasTrabajados: recibosPago.diasTrabajados,
+      salarioDiario: recibosPago.salarioDiario,
+      cestaBono: recibosPago.cestaBono,
+      bonoTransporte: recibosPago.bonoTransporte,
+      otrasAsignaciones: recibosPago.otrasAsignaciones,
+      horasExtrasMonto: recibosPago.horasExtrasMonto,
+      totalAsignaciones: recibosPago.totalAsignaciones,
+      ivssObrero: recibosPago.ivssObrero,
+      rpeObrero: recibosPago.rpeObrero,
+      lphObrero: recibosPago.lphObrero,
+      contribucionPensiones: recibosPago.contribucionPensiones,
+      totalDeducciones: recibosPago.totalDeducciones,
+      salarioNeto: recibosPago.salarioNeto,
+      tasaBcv: recibosPago.tasaBcv,
+      salarioNetoUsd: recibosPago.salarioNetoUsd,
+      status: recibosPago.status,
+      nombre: trabajadores.nombre,
+      apellido: trabajadores.apellido,
+      cedula: trabajadores.cedula,
+      fechaIngreso: trabajadores.fechaIngreso,
+      nssIvss: trabajadores.nssIvss,
+      cargoId: trabajadores.cargoId,
+    })
+    .from(recibosPago)
+    .leftJoin(trabajadores, eq(recibosPago.trabajadorId, trabajadores.id))
+    .where(and(eq(recibosPago.periodoId, periodoId), eq(recibosPago.empresaId, eid)))
+    .all();
+
+    // Generate HTML for all receipts
+    let htmlCollection = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Recibos de Pago - ${periodo.anio}/${String(periodo.mes).padStart(2, "0")}</title>
+  <style>
+    @media print {
+      .page-break { page-break-after: always; }
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    .recibo { background: #fff; max-width: 800px; margin: 0 auto 20px; padding: 20px; border: 1px solid #ddd; }
+    .recibo-header { text-align: center; border-bottom: 2px solid #0047AB; padding-bottom: 10px; margin-bottom: 15px; }
+    .recibo-header h2 { margin: 0; color: #0047AB; font-size: 18px; }
+    .recibo-empresa { font-size: 12px; color: #666; margin-top: 5px; }
+    .recibo-periodo { background: #f0f7ff; padding: 8px; text-align: center; margin-bottom: 15px; font-weight: bold; }
+    .trabajador-info { display: table; width: 100%; margin-bottom: 15px; }
+    .trabajador-row { display: table-row; }
+    .trabajador-label { display: table-cell; padding: 5px 10px; font-weight: bold; width: 140px; background: #f9f9f9; }
+    .trabajador-value { display: table-cell; padding: 5px 10px; }
+    table.conceptos { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    table.conceptos th { background: #0047AB; color: #fff; padding: 8px; text-align: left; font-size: 12px; }
+    table.conceptos td { padding: 6px 8px; border-bottom: 1px solid #eee; font-size: 12px; }
+    table.conceptos .text-right { text-align: right; }
+    table.conceptos .total-row { background: #f0f7ff; font-weight: bold; }
+    .firma { margin-top: 30px; display: table; width: 100%; }
+    .firma-box { display: table-cell; width: 50%; text-align: center; padding: 20px; }
+    .firma-line { border-top: 1px solid #333; padding-top: 5px; font-size: 11px; }
+    @media screen { .no-print { display: none; } }
+  </style>
+</head>
+<body>`;
+
+    for (const r of recibosData) {
+      const html = generarHtmlRecibo({
+        empresa,
+        trabajador: { ...trabajadores, ...r } as any,
+        recibo: { ...recibosPago.$inferSelect, ...r } as any,
+        periodo,
+        tasaBCV: tasaBCV?.valor || 36,
+      });
+      htmlCollection += `<div class="page-break">${html}</div>`;
+    }
+
+    htmlCollection += `
+<div class="no-print" style="text-align: center; padding: 20px;">
+  <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; cursor: pointer;">Imprimir Todos los Recibos</button>
+</div>
+</body></html>`;
+
+    return new NextResponse(htmlCollection, {
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Content-Disposition": `inline; filename="recibos_${periodo.anio}${String(periodo.mes).padStart(2, "0")}.html"`,
+      },
+    });
+  }
+
   return NextResponse.json({ error: "tipo de reporte no válido" }, { status: 400 });
 }

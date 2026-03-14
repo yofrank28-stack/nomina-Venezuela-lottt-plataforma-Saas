@@ -104,3 +104,7 @@ src/
 | 2026-03-14 | Master: Gestión de Pagos y Licencias - validar Binance/PagoMóvil/Zinli/BanescoPA, activar licencia 30 días con email bienvenida + PDF manual |
 | 2026-03-14 | Respaldo DB: función exportar JSON completo empresa desde panel Master |
 | 2026-03-14 | Cierre de Mes: botón 'Cerrar Mes' bloquea ediciones para integridad contable |
+| 2026-03-14 | Dashboard Nómina: tabla empleados con procesar, cálculo automático (IVSS 4%, RPE 0.5%, LPH 1%, CEPP 9%) |
+| 2026-03-14 | BCV Widget integrado en header de todas las vistas internas |
+| 2026-03-14 | Aislamiento multi-empresa verificado: cada admin solo ve sus empleados (empresa_id) |
+| 2026-03-14 | Exportación: TXT Bancario ACH Banesco/Mercantil + PDF recibos con SSR |
