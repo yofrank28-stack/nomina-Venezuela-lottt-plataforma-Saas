@@ -154,6 +154,11 @@ export function calcularPrestacionesSociales(
     tasaInteresBCV,
   } = params;
 
+  // Tasa activa BCV para intereses: 58.30% anual (Decreto BCV)
+  // Fórmula: Interés = Acumulado_Anterior * Tasa_Activa_Mensual
+  // Tasa Mensual = (58.30 / 100) / 12 = 0.0485833... (4.8583% mensual)
+  const TASA_ACTIVA_MENSUAL = 58.30 / 100 / 12;
+
   const { salarioDiarioIntegral } = calcularSalarioIntegral(salarioBase, diasUtilidades, aniosServicio);
 
   // VÍA A: GARANTÍA (Art. 142 a)
@@ -166,8 +171,8 @@ export function calcularPrestacionesSociales(
   const diasGarantiaTrimestre = diasPorTrimestre + (diasAdicionalesAnuales / 4);
   const montoGarantiaTrimestre = diasGarantiaTrimestre * salarioDiarioIntegral;
 
-  // Intereses sobre garantía (tasa activa BCV)
-  const interesesTrimestre = (montoGarantiaTrimestre * (tasaInteresBCV / 100)) / 4;
+  // Intereses sobre garantía: Fórmula = Acumulado_Anterior * Tasa_Activa_Mensual
+  const interesesTrimestre = montoGarantiaTrimestre * TASA_ACTIVA_MENSUAL;
 
   // Acumulado total garantía
   const montoGarantiaTotal = (trimestresAcumulados * diasGarantiaTrimestre) * salarioDiarioIntegral;
