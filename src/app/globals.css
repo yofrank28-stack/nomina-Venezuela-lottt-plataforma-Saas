@@ -626,6 +626,61 @@ body {
 
 .bcv-dot.stale { background: var(--color-warning); }
 
+/* ─── BCV WIDGET ────────────────────────────────────────────────────────────── */
+.bcv-widget {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--color-primary-dark);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+
+.bcv-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bcv-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.bcv-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bcv-number {
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+}
+
+.bcv-number.warning {
+  color: var(--color-warning);
+}
+
+.bcv-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.bcv-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--color-border);
+}
+
 /* ─── EMPTY STATE ─────────────────────────────────────────────────────────── */
 .empty-state {
   text-align: center;

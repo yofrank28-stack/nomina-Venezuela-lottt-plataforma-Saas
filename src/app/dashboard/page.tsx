@@ -4,6 +4,7 @@ import db from "@/db";
 import { empresas, trabajadores, periodosNomina, recibosPago } from "@/db/schema";
 import { eq, and, count, sum, desc } from "drizzle-orm";
 import { getTasaVigente } from "@/lib/tasas";
+import BcvWidget from "@/components/ui/BcvWidget";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -43,6 +44,7 @@ export default async function DashboardPage() {
   }
 
   const tasaBCV = getTasaVigente("bcv_usd_ves");
+  const tasaActiva = getTasaVigente("tasa_activa_bcv");
 
   const licenciaExpira = empresa.licenciaExpira ? new Date(empresa.licenciaExpira) : null;
   const ahora = new Date();
@@ -54,11 +56,8 @@ export default async function DashboardPage() {
     <>
       <div className="topbar">
         <h1 className="topbar-title">Dashboard</h1>
-        {tasaBCV && (
-          <div className="bcv-indicator">
-            <span className="bcv-dot"></span>
-            USD/VES: Bs. {tasaBCV.valor.toFixed(2)}
-          </div>
+        {tasaBCV && tasaActiva && (
+          <BcvWidget tasaUsd={tasaBCV.valor} tasaInteres={tasaActiva.valor} />
         )}
         <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
           {new Date().toLocaleDateString("es-VE", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
