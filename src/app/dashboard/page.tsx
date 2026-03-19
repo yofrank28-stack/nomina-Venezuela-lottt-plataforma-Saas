@@ -5,6 +5,7 @@ import { empresas, trabajadores, periodosNomina, recibosPago } from "@/db/schema
 import { eq, and, count, sum, desc } from "drizzle-orm";
 import { getTasaVigente } from "@/lib/tasas";
 import BcvWidget from "@/components/ui/BcvWidget";
+import { AlertasFiscales } from '@/components/AlertasFiscales';
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -55,7 +56,7 @@ export default async function DashboardPage() {
   return (
     <>
       <div className="topbar">
-        <h1 className="topbar-title">Dashboard</h1>
+        <h1 className="topbar-title">Panel de Control</h1>
         {tasaBCV && tasaActiva && (
           <BcvWidget tasaUsd={tasaBCV.valor} tasaInteres={tasaActiva.valor} />
         )}
@@ -64,7 +65,9 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="page-content">
+      <main className="page-content">
+        <AlertasFiscales empresa={empresa} />
+
         {showOnboarding && (
           <div className="alert alert-warning">
             <strong>Configuración pendiente.</strong> Complete el proceso de configuración de su empresa para usar todas las funcionalidades.{" "}
@@ -204,7 +207,7 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </>
   );
 }

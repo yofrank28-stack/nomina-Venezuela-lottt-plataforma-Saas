@@ -10,17 +10,21 @@ import BcvWidget from "@/components/ui/BcvWidget";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/login");
-  if (session.rol === "master") redirect("/master");
+  if (session.role === "master") redirect("/master");
 
-  let empresaNombre = "";
+  let empresaNombre = 'Empresa Demo';
+  let empresa = null;
+
   if (session.empresaId) {
-    const empresa = db.select({ razonSocial: empresas.razonSocial, onboardingCompleto: empresas.onboardingCompleto })
+    empresa = db.select({ razonSocial: empresas.razonSocial, onboardingCompleto: empresas.onboardingCompleto })
       .from(empresas)
       .where(eq(empresas.id, session.empresaId))
       .get();
-    empresaNombre = empresa?.razonSocial || "";
+  }
 
-    if (empresa && !empresa.onboardingCompleto && session.rol === "admin") {
+  if (empresa) {
+    empresaNombre = empresa.razonSocial || 'Empresa Demo';
+    if (!empresa.onboardingCompleto && session.role === "admin") {
       // Only redirect if not already on config page
     }
   }
@@ -30,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="app-layout">
-      <Sidebar rol={session.rol} nombre={session.nombre} empresaNombre={empresaNombre} />
+      <Sidebar role={session.role} nombre={session.nombre} empresaNombre={empresaNombre} />
       <div className="main-content">
         <div className="topbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
           <div></div>

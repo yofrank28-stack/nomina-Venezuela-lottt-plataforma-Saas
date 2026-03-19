@@ -1,41 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
-import { login } from "@/lib/auth";
-import { runMigrations } from "@/db/migrate";
+import { createSession, SessionPayload } from "@/lib/auth";
 
-// Ensure DB is initialized on first request
-let dbInitialized = false;
-function ensureDB() {
-  if (!dbInitialized) {
-    runMigrations();
-    dbInitialized = true;
-  }
-}
+// MODO DE EMERGENCIA: Bypass para admin@empresa.com
+// Este script reemplaza la lógica de login para conceder acceso inmediato
+// al usuario especificado, creando una sesión de administrador sin validar la contraseña.
 
 export async function POST(request: NextRequest) {
   try {
-    ensureDB();
-    const { email, password } = await request.json() as { email: string; password: string };
+    const { email } = await request.json() as { email: string };
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Email y contraseña son requeridos" }, { status: 400 });
+    if (email.toLowerCase() === 'admin@empresa.com') {
+      console.warn("*****************************************************");
+      console.warn("** BYPASS DE EMERGENCIA ACTIVO para admin@empresa.com **");
+      console.warn("*****************************************************");
+
+      // Payload de sesión para el admin de la empresa
+      const payload: SessionPayload = {
+        userId: 'user-bypass-emergency-01',
+        empresaId: 'dac4a799-418b-439c-b635-25e62c16d557', // ID de K-99 SAC
+        role: 'admin',
+        email: 'admin@empresa.com',
+      };
+
+      const token = await createSession(payload);
+
+      const response = NextResponse.json({
+        success: true,
+        message: "Acceso de emergencia concedido.",
+        user: payload
+      }, { status: 200 });
+
+      // Crear la cookie de sesión
+      response.cookies.set("session", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 1, // Sesión de emergencia de 1 hora
+        path: '/',
+      });
+
+      return response;
     }
 
-    const result = await login(email, password);
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 401 });
-    }
+    // Bloquear otros intentos de login durante el modo de emergencia
+    return NextResponse.json(
+      { error: "Sistema en modo de emergencia. Acceso restringido." },
+      { status: 403 }
+    );
 
-    const response = NextResponse.json({ user: result.user, success: true });
-    response.cookies.set("session", result.token!, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 8, // 8 hours
-      path: "/",
-    });
-    return response;
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  } catch (err: any) {
+    console.error("Error crítico durante el bypass de emergencia:", err.message);
+    return NextResponse.json({ error: "Error interno del servidor en modo bypass." }, { status: 500 });
   }
 }

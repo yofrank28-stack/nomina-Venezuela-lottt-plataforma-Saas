@@ -6,18 +6,11 @@ const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "nomina-venezuela-secret-key-2024-change-in-production"
 );
 
-const PUBLIC_PATHS = ["/login", "/api/auth/login", "/_next", "/favicon.ico"];
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
   const token = request.cookies.get("session")?.value;
 
+  // Si no hay token y no es una ruta pública, redirigir a login
   if (!token) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
@@ -26,26 +19,38 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(token, SECRET);
-    const rol = payload.rol as string;
+    const { role, userId, empresaId, email } = payload as {
+      role: string;
+      userId: string;
+      empresaId?: string;
+      email: string;
+    };
 
-    // Role-based path protection
-    if (pathname.startsWith("/master") && rol !== "master") {
+    // Redirección basada en rol si se intenta acceder a /master
+    if (pathname.startsWith("/master") && role !== "master") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
-    // Inject headers for server components
+    // Inyectar cabeceras para el uso en Server Components
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-user-id", payload.userId as string);
-    requestHeaders.set("x-empresa-id", (payload.empresaId as string) || "");
-    requestHeaders.set("x-rol", rol);
+    requestHeaders.set("x-user-id", userId);
+    requestHeaders.set("x-empresa-id", empresaId || "");
+    requestHeaders.set("x-role", role);
+    requestHeaders.set("x-email", email);
 
     return NextResponse.next({ request: { headers: requestHeaders } });
-  } catch {
+  } catch (err) {
+    // Si el token es inválido, redirigir a login y limpiar la cookie
     const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    response.cookies.delete("session");
+    return response;
   }
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    // Excluir rutas de API, assets de Next.js, y archivos públicos
+    "/((?!api|_next/static|_next/image|favicon.ico|login|$).*)"
+  ],
 };

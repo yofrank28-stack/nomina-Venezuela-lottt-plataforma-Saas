@@ -98,6 +98,7 @@ export default async function ReportesPage() {
                             <div style={{ display: "flex", gap: "4px" }}>
                               <a href={`/api/reportes?tipo=tiuna&periodo_id=${p.id}`} className="btn btn-secondary btn-sm" target="_blank">TIUNA/IVSS</a>
                               <a href={`/api/reportes?tipo=banavih&periodo_id=${p.id}`} className="btn btn-secondary btn-sm" target="_blank">BANAVIH</a>
+                              <a href={`/api/reportes?tipo=islr&periodo_id=${p.id}`} className="btn btn-secondary btn-sm" target="_blank">ISLR/SENIAT</a>
                             </div>
                           ) : <span className="text-muted text-sm">—</span>}
                         </td>
@@ -122,6 +123,8 @@ export default async function ReportesPage() {
                 <li style={{ padding: "4px 0", borderBottom: "1px solid var(--color-border)" }}>✓ Liquidación de Egreso completa</li>
                 <li style={{ padding: "4px 0", borderBottom: "1px solid var(--color-border)" }}>✓ Recibos de Vacaciones</li>
                 <li style={{ padding: "4px 0" }}>✓ Constancia de Trabajo</li>
+                 <li style={{ padding: "4px 0" }}>✓ Libro de Sueldos y Salarios</li>
+                <li style={{ padding: "4px 0" }}>✓ Libro de Vacaciones</li>
               </ul>
             </div>
             <div>
@@ -131,7 +134,7 @@ export default async function ReportesPage() {
                 <li style={{ padding: "4px 0", borderBottom: "1px solid var(--color-border)" }}>✓ ACH Mercantil — Nómina</li>
                 <li style={{ padding: "4px 0", borderBottom: "1px solid var(--color-border)" }}>✓ TIUNA — IVSS (Seguro Social)</li>
                 <li style={{ padding: "4px 0", borderBottom: "1px solid var(--color-border)" }}>✓ BANAVIH — LPH (Vivienda)</li>
-                <li style={{ padding: "4px 0" }}>✓ Libro de Salarios (SENIAT)</li>
+                <li style={{ padding: "4px 0" }}>✓ ISLR — SENIAT (XML)</li>
               </ul>
             </div>
           </div>
